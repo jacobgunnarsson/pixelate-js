@@ -1,0 +1,18 @@
+<html>
+<head>
+    <title>pixelate.js demo</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script type="text/javascript" src="../src/pixelate.js"></script>
+</head>
+<body>
+    <img src="octocat300.png" id="octocat" />
+
+    <script type="text/javascript">
+        var element = document.getElementById('octocat');
+
+        var pixelate = new Pixelate(element, { cellSize: 20 });
+    </script>
+</body>
+</html>
