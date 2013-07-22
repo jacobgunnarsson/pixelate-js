@@ -40,15 +40,10 @@ var Pixelate = function(element, options) {
     this.cells = [];
 
     /*
-    *   Wait for image load the initiate
+    *   Wait for imageload then initiate
     */
     this.src.element.onload = function() {
-        console.log('init');
-
         self.init();
-
-
-
     };
 
 };
@@ -82,6 +77,9 @@ Pixelate.prototype = {
         if (!ctx)
             this.utils.error('Unsupported browser, pixelate.js requires an HTLM5 capable browser');
 
+        /*
+        *   Draw source image in temp. context
+        */
         ctx.drawImage(element, 0, 0);
 
         var data = ctx.getImageData(0, 0, width, height).data,
@@ -90,21 +88,20 @@ Pixelate.prototype = {
             i = 0;
 
         while (i < dataLen) {
-            var cell = [data[i], data[i + 1], data[i + 2], data[i + 3]];
-
-            cells.push(cell);
+            cells.push([data[i], data[i + 1], data[i + 2], data[i + 3]]);
 
             i += 4;
         }
 
         this.cells = cells;
-        console.log('paintImage');
-        this.paintImage();
 
-        this.utils.perf.end();
+        this.paintImage();
 
     },
 
+    /*
+    *   Return a <canvas> DOM object, with id @id. Set @appendElement = true to append to DOM
+    */
     createCanvas: function(id, appendElement) {
         var src = this.src,
             canvas = document.createElement('canvas');
@@ -121,46 +118,56 @@ Pixelate.prototype = {
     paintImage: function() {
         var canvas = this.createCanvas('pixelate-canvas', true),
             ctx = canvas.getContext('2d'),
-            cells = this.cells,
-            width = this.src.width;
-            height = this.src.height;
+            cells = this.cells;
 
-        var pixel = ctx.createImageData(1, 1),
-            pixelData = pixel.data;
+        var image = ctx.createImageData(this.src.width, this.src.height);
+            imageData = image.data,
+            cellsLen = cells.length,
+            i = j = 0;
 
-        var cellsLen = cells.length,
-            i = 0,
-            x = 0,
-            y = 0;
+        while (j < cellsLen) {
+            var cell = cells[j];
 
-        while (i < cellsLen) {
-            var cell = cells[i];
+            imageData[i]        = cell[0];
+            imageData[i + 1]    = cell[1];
+            imageData[i + 2]    = cell[2];
+            imageData[i + 3]    = cell[3];
 
-            pixelData[0] = cell[0];
-            pixelData[1] = cell[1];
-            pixelData[2] = cell[2];
-            pixelData[3] = cell[3];
-
-            ctx.putImageData(pixel, x, y);
-
-            ++i; ++x;
-
-            if (x === width + 1) {
-                x = 1;
-                ++y;
-            }
+            i += 4; ++j;
         }
 
+        ctx.putImageData(image, 0, 0);
+
+        this.utils.perf.end();
+
+    },
+
+    measureFunc: function(func) {
+        var iterations = 100,
+            startMs = +new Date();
+
+        for (var i = 0; i < iterations; ++i) {
+
+        }
+
+        var endMs = +new Date(),
+            total = startMs - endMs;
+
+        console.log('Test took ' + total + 'ms');
     },
 
     utils: {
 
         perf: {
 
-            start: function() { this.startMs = +new Date(); },
+            start: function() {
+                this.startMs = +new Date();
+            },
 
-            end: function() {
+            end: function(doReturn) {
                 this.endMs = +new Date();
+
+                if (doReturn) return this.endMs;
 
                 console.log('Page rendered in: ' + (this.endMs - this.startMs) + 'ms');
             }
