@@ -35,11 +35,6 @@
         };
 
         /*
-        *   Store computed cells
-        */
-        this.cells = [];
-
-        /*
         *   Wait for imageload then initiate
         */
         this.src.element.onload = function() {
@@ -67,7 +62,6 @@
             /*
             *   Save source image attributes for later use
             */
-            this.src.style  = element.style;
             this.src.id     = element.id;
             this.src.class  = element.class;
             this.src.width  = width;
@@ -83,6 +77,11 @@
             this.canvas.class   = this.src.class;
             this.canvas.width   = this.src.width;
             this.canvas.height  = this.src.height;
+
+            /*
+            *   Copy image element CSS styles
+            */
+            this.canvas.style.cssText = this.src.element.style.cssText;
 
             element.parentNode.replaceChild(this.canvas, element);
 
