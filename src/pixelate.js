@@ -74,14 +74,11 @@
             this.src.height = height;
 
             /*
-            *   Create canvas to parse image
+            *   Create canvas
             */
             this.canvas = document.createElement('canvas');
             this.ctx    = this.canvas.getContext && this.canvas.getContext('2d');
 
-            /*
-            *   Set canvas attributes based on source image element and replace it
-            */
             this.canvas.id      = this.src.id;
             this.canvas.class   = this.src.class;
             this.canvas.width   = this.src.width;
@@ -102,11 +99,11 @@
 
             this.src.data = this.ctx.getImageData(0, 0, width, height).data;
 
-            this.paintFrame();
+            this.renderFrame();
 
         },
 
-        paintFrame: function() {
+        renderFrame: function() {
             var ctx         = this.ctx,
                 cellSize    = this.defaults.cellSize,
                 data        = this.src.data,
