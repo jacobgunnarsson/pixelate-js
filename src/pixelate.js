@@ -95,62 +95,23 @@
             if (!this.ctx)
                 this.utils.error('Unsupported browser, pixelate.js requires an HTLM5 capable browser');
 
-            this.getCells();
-
-        },
-
-        getCells: function() {
-            var width = this.src.width,
-                height = this.src.height,
-                cellSize = this.defaults.cellSize,
-                columns = Math.ceil(width / cellSize),
-                rows = Math.ceil(height / cellSize),
-                totalCells = columns * rows;
-
             /*
             *   Draw source image temp. for parsing
             */
             this.ctx.drawImage(element, 0, 0);
 
-            var imageData = this.ctx.getImageData(0, 0, width, height).data,
-                cells = [],
-                x = Math.ceil(cellSize / 2),
-                y = Math.ceil(cellSize / 2),
-                i = 0;
-
-            while (i < totalCells) {
-                var index = (x + y * width) * 4,
-                    a = imageData[index + 3] / 255,
-                    cell = [imageData[index], imageData[index + 1], imageData[index + 2], a];
-
-                cells.push(cell);
-
-                if (x <= width) {
-                    x += cellSize;
-                } else {
-                    x = 0;
-                    y += cellSize;
-                }
-
-                ++i;
-
-            }
-
-            this.cells = cells;
-
-            this.utils.perf.end('Parsed image in ');
+            this.src.data = this.ctx.getImageData(0, 0, width, height).data;
 
             this.paintFrame();
 
         },
 
         paintFrame: function() {
-            var ctx = this.ctx,
-                cells = this.cells,
-                cellsLen = cells.length,
-                cellSize = this.defaults.cellSize,
-                width = this.src.width,
-                height = this.src.height;
+            var ctx         = this.ctx,
+                cellSize    = this.defaults.cellSize,
+                data        = this.src.data,
+                width       = this.src.width,
+                height      = this.src.height;
 
             var x = 0,
                 y = 0,
@@ -159,14 +120,23 @@
             this.utils.perf.start();
 
             /*
+            *   Calculate how many cells to render
+            */
+            var cells = Math.ceil(width / cellSize) * Math.ceil(height / cellSize);
+
+            /*
             *   Clear previous frame
             */
             ctx.clearRect(0, 0, width, height);
 
-            while (i < cellsLen) {
-                var cell = cells[i];
+            while (i < cells) {
+                var pixelIndex  = (x + y * width) * 4,
+                    red         = data[pixelIndex],
+                    green       = data[pixelIndex + 1],
+                    blue        = data[pixelIndex + 2],
+                    alpha       = data[pixelIndex + 3] / 255;
 
-                ctx.fillStyle = 'rgba(' + cell[0] + ', ' + cell[1] + ', ' + cell[2] + ', ' + cell[3] + ')';
+                ctx.fillStyle = 'rgba(' + red + ', ' + green + ', ' + blue + ', ' + alpha + ')';
                 ctx.fillRect(x, y, cellSize, cellSize);
 
                 if (x <= width) {
