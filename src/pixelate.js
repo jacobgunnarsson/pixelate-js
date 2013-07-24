@@ -58,46 +58,48 @@
 
         },
 
-        /*
-        *   Return a <canvas> DOM object, with id @id. Set @appendElement = true to append to DOM
-        */
-        createCanvas: function(id, appendElement) {
-            var src = this.src,
-                canvas = document.createElement('canvas');
-
-            canvas.id = id;
-            canvas.width = src.width;
-            canvas.height = src.height;
-
-            if (appendElement) src.element.parentNode.appendChild(canvas);
-
-            return canvas;
-        },
-
         parseImage: function() {
             var element = this.src.element, width, height;
 
-            width = this.src.width = element.width || element.naturalHeight;
-            height = this.src.height = element.height || element.naturalHeight;
-            this.src.style  = element.style;
+            width   = element.width     || element.naturalHeight;
+            height  = element.height    || element.naturalHeight;
 
             /*
-            *   Create temporary <canvas> to parse image
+            *   Save source image attributes for later use
             */
-            var canvas = this.createCanvas('pixelate-tmp-canvas', false),
-                ctx = canvas.getContext && canvas.getContext('2d');
+            this.src.style  = element.style;
+            this.src.id     = element.id;
+            this.src.class  = element.class;
+            this.src.width  = width;
+            this.src.height = height;
+
+            /*
+            *   Create canvas to parse image
+            */
+            this.canvas = document.createElement('canvas');
+            this.ctx    = this.canvas.getContext && this.canvas.getContext('2d');
+
+            /*
+            *   Set canvas attributes based on source image element and replace it
+            */
+            this.canvas.id      = this.src.id;
+            this.canvas.class   = this.src.class;
+            this.canvas.width   = this.src.width;
+            this.canvas.height  = this.src.height;
+
+            element.parentNode.replaceChild(this.canvas, element);
 
             /*
             *   Check for browser canvas compatability
             */
-            if (!ctx)
+            if (!this.ctx)
                 this.utils.error('Unsupported browser, pixelate.js requires an HTLM5 capable browser');
 
-            this.getCells(ctx);
+            this.getCells();
 
         },
 
-        getCells: function(ctx) {
+        getCells: function() {
             var width = this.src.width,
                 height = this.src.height,
                 cellSize = this.defaults.cellSize,
@@ -106,11 +108,11 @@
                 totalCells = columns * rows;
 
             /*
-            *   Draw source image in temp. context
+            *   Draw source image temp. for parsing
             */
-            ctx.drawImage(element, 0, 0);
+            this.ctx.drawImage(element, 0, 0);
 
-            var imageData = ctx.getImageData(0, 0, width, height).data,
+            var imageData = this.ctx.getImageData(0, 0, width, height).data,
                 cells = [],
                 x = Math.ceil(cellSize / 2),
                 y = Math.ceil(cellSize / 2),
@@ -143,18 +145,23 @@
         },
 
         paintFrame: function() {
-            var canvas = this.createCanvas('pixelate-canvas', true),
-                ctx = canvas.getContext('2d'),
+            var ctx = this.ctx,
                 cells = this.cells,
                 cellsLen = cells.length,
                 cellSize = this.defaults.cellSize,
-                width = this.src.width;
+                width = this.src.width,
+                height = this.src.height;
 
             var x = 0,
                 y = 0,
                 i = 0;
 
             this.utils.perf.start();
+
+            /*
+            *   Clear previous frame
+            */
+            ctx.clearRect(0, 0, width, height);
 
             while (i < cellsLen) {
                 var cell = cells[i];
