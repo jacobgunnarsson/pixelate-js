@@ -12,7 +12,14 @@
     <script type="text/javascript">
         var element = document.getElementById('img');
 
-        var pixelate = new Pixelate(element, { cellSize: 3 });
+        var pixelate = new Pixelate(element, {
+            cellSize: 5,
+            animate: true,
+            fromCellSize: 100,
+            toCellSize: 5,
+            animSpeed: 30,
+            step: 1
+        });
     </script>
 </body>
 </html>

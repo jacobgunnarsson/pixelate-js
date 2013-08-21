@@ -13,11 +13,7 @@
         */
         this.defaults = {
             cellSize: 30,
-            animate: false,
-            cellStartSize: null,
-            cellEndSide: null,
-            frameWidth: null,
-            frameHeight: null
+            animate: false
         };
 
         /*
@@ -25,7 +21,7 @@
         */
         for (var key in options)
             if (options.hasOwnProperty(key))
-                if (this.defaults[key]) this.defaults[key] = options[key];
+                this.defaults[key] = options[key];
 
         /*
         *   Store image element and properties
@@ -50,6 +46,11 @@
             this.utils.perf.start();
 
             this.parseImage();
+
+            if (this.defaults.animate)
+                this.startAnimation();
+            else
+                this.renderFrame();
 
         },
 
@@ -98,8 +99,6 @@
 
             this.src.data = this.ctx.getImageData(0, 0, width, height).data;
 
-            this.renderFrame();
-
         },
 
         renderFrame: function() {
@@ -112,8 +111,6 @@
             var x = 0,
                 y = 0,
                 i = 0;
-
-            this.utils.perf.start();
 
             /*
             *   Calculate how many cells to render
@@ -146,7 +143,46 @@
 
             }
 
-            this.utils.perf.end('Painted image in ');
+        },
+
+        startAnimation: function() {
+            var self = this,
+                step = this.defaults.step,
+                speed = Math.floor(1000 / this.defaults.animSpeed),
+                fromCellSize = this.defaults.fromCellSize,
+                toCellSize = this.defaults.toCellSize;
+
+            this.defaults.cellSize = this.defaults.fromCellSize;
+
+            /*
+            *   Hack polyfill for requestAnimationFrame
+            */
+            var requestAnimationFrame = window.requestAnimationFrame        ||
+                                        window.webkitRequestAnimationFrame  ||
+                                        window.mozRequestAnimationFrame     ||
+                                        window.msRequestAnimationFrame;
+
+            if (!requestAnimationFrame)
+                this.utils.error('Your browser does not support requestAnimationFrame');
+
+            window.requestAnimationFrame = requestAnimationFrame;
+
+            /*
+            *   Animation function being looped
+            */
+            function requestFrame() {
+
+                setTimeout(function() {
+                    self.defaults.cellSize = (fromCellSize > toCellSize) ? self.defaults.cellSize - step : self.defaults.cellSize + step;
+
+                    self.renderFrame();
+
+                    if (self.defaults.cellSize !== toCellSize) requestAnimationFrame(requestFrame);
+                }, speed);
+
+            }
+
+            requestFrame();
 
         },
 
